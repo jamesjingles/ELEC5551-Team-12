@@ -7,14 +7,13 @@ Last_GPS = 0;
 Grounded = 0;
 acc_spike = 0;
 Low_Power_Mode = 0;
-
+}
 
 %Defined Functions
 Receive_Manual_Toggles(){
 CPU_switch_toggle = Read(45);
 Low_Power_Toggle = Read(45) ;
 Triangulation_toggle = Read(14);
-Image_Data = Read(21);
 }
 
 Read_Values_Function(){
@@ -24,6 +23,7 @@ Payload_GPS = Read();
 Accelerometer_Value = Read(25);
 Altitude_Sensor_Value = Read(36);
 Temperature_Sensor_Value = Read(24);
+Image_Data = Read(21);
 }
 
 Save_Values_Function(){
