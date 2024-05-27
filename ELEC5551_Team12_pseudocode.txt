@@ -1,0 +1,120 @@
+void setup{
+%Flags
+GPS_Check_Loop = 1;
+Main_GPS_Works = 1;
+Backup_GPS_Works = 1;
+Last_GPS = 0;
+Grounded = 0;
+acc_spike = 0;
+Low_Power_Mode = 0;
+
+
+%Defined Functions
+Receive_Manual_Toggles(){
+CPU_switch_toggle = Read(45);
+Low_Power_Toggle = Read(45) ;
+Triangulation_toggle = Read(14);
+Image_Data = Read(21);
+}
+
+Read_Values_Function(){
+Main_GPS = Read(22);
+Backup_GPS = Read(39);
+Payload_GPS = Read();
+Accelerometer_Value = Read(25);
+Altitude_Sensor_Value = Read(36);
+Temperature_Sensor_Value = Read(24);
+}
+
+Save_Values_Function(){
+write(3) = Main_GPS;
+write(3) = Backup_GPS;
+write(3) = Payload_GPS;
+write(3) = Accelerometer_Value;
+write(3) = Altitude_Sensor_Value;
+write(3) = Temperature_Sensor_Value;
+write(46) = Temperature_Sensor_Value;
+write(46) = Image_Data
+}
+	
+Write_Telemetry_Function(){
+If Last_GPS = 1
+	write(46) = Telemetry_value;
+ElseIf Main_GPS_Works = 1
+	Telemetry_value = Main_GPS;
+	write(46) = Telemetry_value;
+	write(3) = Telemetry_value;
+Else 
+	Telemetry_value = Backup_GPS;
+	write(46) = Telemetry_value;
+	write(3) = Telemetry_value;
+}
+
+Write_Triangulation_function(){
+	If Triangulation_toggle = 1	  
+		If Low_Power_Mode = 1
+			Frequency = 0.03333Hz;
+			wait(1/Frequency);
+			write(13) = 1 ;
+			write(13) = 0 ;
+		Else
+			Frequency = 0.5Hz;
+			wait(1/Frequency);
+			write(13) = 1;
+			write(13) = 0;
+}
+		
+
+Gps_Check_Function(){
+If Triangulation_toggle == 0 && GPS_Check_Loop == 1
+	If Main_GPS == Backup_GPS
+		Main_GPS_Works = 1;
+		
+	ElseIf Main_GPS == Payload_GPS
+		Backup_GPS_Works = 0; 
+		GPS_Check_Loop == 0;
+		
+	ElseIf Backup_GPS == Payload_GPS
+		Main_GPS_Works = 1;
+		Backup_GPS_Works = 0;
+		GPS_Check_Loop == 0;
+	Else
+		Last_GPS = 1
+		last_gps_value = Main_GPS;
+		GPS_Check_Loop == 0;
+}
+
+}
+
+Grounded Function(){
+If Grounded == 0
+	delta_alt = Altitude_Sensor_Value - alt_old;
+	If Accelerometer_Value > acc_threshold
+		acc_spike = 1;
+	alt_old = Altitude_Sensor_Value
+	If acc_spike == 1 && Altitude_Sensor_Value == 0;
+		Grounded = 1;
+	Elseif acc_spike == 1 && delta_alt == 0;
+		Grounded = 1;
+	ElseIf delta_alt == 0 && Altitude_Sensor_Value == 0; 
+		Grounded = 1   
+}
+
+Low_Power_Mode_Function(){
+If Grounded = 1 || Low_Power_Toggle = 1;
+	Low_Power_Mode = 1;
+}
+
+
+void loop{
+while CPU_switch_toggle == 0;
+	Receive_Manual_Toggles()
+	Read_Values_Function();
+	Save_Values_Function();
+	Gps_Check_Function();
+	Grounded_Function();
+	Low_Power_Mode_Function();
+	Write_Telemetry_Function()
+	Write_Triangulation_function();
+}
+	
